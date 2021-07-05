@@ -40,6 +40,7 @@ import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.TownyUniverse;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
+import com.palmergames.bukkit.towny.object.WorldCoord;
 
 /**
  * 
@@ -53,6 +54,7 @@ public class SiegeController {
 	private static Map<UUID, Siege> townSiegeMap = new ConcurrentHashMap<>();
 	private static List<Town> siegedTowns = new ArrayList<>();
 	private static List<String> siegedTownNames = new ArrayList<>();
+	private static Map<WorldCoord, Siege> worldCoordSiegeMap = new ConcurrentHashMap<WorldCoord, Siege>();
 
 	public static void newSiege(Town town) {
 		Siege siege = new Siege(town);
@@ -69,6 +71,7 @@ public class SiegeController {
 		townSiegeMap.clear();
 		siegedTowns.clear();
 		siegedTownNames.clear();
+		worldCoordSiegeMap.clear();
 	}
 
 	public static void saveSiege(Siege siege) {
@@ -217,6 +220,7 @@ public class SiegeController {
 		double z = Double.parseDouble(location[3]);
 		Location loc = new Location(world, x, y, z);
 		siege.setFlagLocation(loc);
+		worldCoordSiegeMap.put(WorldCoord.parseWorldCoord(loc), siege);
 
 		siege.setSiegeBalance(SiegeMetaDataController.getSiegeBalance(town));
 		siege.setWarChestAmount(SiegeMetaDataController.getWarChestAmount(town));
@@ -264,6 +268,7 @@ public class SiegeController {
 		townSiegeMap.remove(town.getUUID());
 		siegedTowns.remove(siege.getTown());
 		siegedTownNames.remove(siege.getTown().getName());
+		worldCoordSiegeMap.remove(WorldCoord.parseWorldCoord(siege.getFlagLocation()));
 
 		SiegeWarTownUtil.setPvpFlag(town, false);
 		CosmeticUtil.removeFakeBeacons(siege);
@@ -286,6 +291,10 @@ public class SiegeController {
 
 	public static boolean hasActiveSiege(Town town) {
 		return hasSiege(town) && getSiege(town).getStatus().isActive();
+	}
+	
+	public static boolean hasActiveSiege(WorldCoord wc) {
+		return worldCoordSiegeMap.containsKey(wc) && getSieges().contains(worldCoordSiegeMap.get(wc));
 	}
 
 	public static Collection<Town> getSiegedTowns() {
@@ -313,6 +322,11 @@ public class SiegeController {
 		if (hasSiege(townUUID))
 			return townSiegeMap.get(townUUID);
 		return null;
+	}
+
+	@Nullable
+	public static Siege getSiege(WorldCoord wc) {
+		return worldCoordSiegeMap.get(wc);
 	}
 
 	public static void setSiege(Town town, boolean bool) {
@@ -451,6 +465,7 @@ public class SiegeController {
 						((long) (SiegeWarSettings.getWarSiegeMaxHoldoutTimeHours() * TimeMgmt.ONE_HOUR_IN_MILLIS))));
 		siege.setActualEndTime(0);
 		siege.setFlagLocation(bannerBlock.getLocation());
+		worldCoordSiegeMap.put(WorldCoord.parseWorldCoord(siege.getFlagLocation()), siege);
 
 		SiegeController.setSiege(targetTown, true);
 		SiegeController.putTownInSiegeMap(targetTown, siege);

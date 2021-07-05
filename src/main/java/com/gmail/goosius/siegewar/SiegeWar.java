@@ -20,6 +20,7 @@ import com.gmail.goosius.siegewar.listeners.SiegeWarPlotEventListener;
 import com.gmail.goosius.siegewar.listeners.SiegeWarSafeModeListener;
 import com.gmail.goosius.siegewar.listeners.SiegeWarTownEventListener;
 import com.gmail.goosius.siegewar.listeners.SiegeWarTownyEventListener;
+import com.gmail.goosius.siegewar.listeners.TownyMapListener;
 import com.gmail.goosius.siegewar.listeners.SiegeWarCannonsListener;
 import com.gmail.goosius.siegewar.listeners.SiegeWarTownyDynmapListener;
 
@@ -30,6 +31,7 @@ public class SiegeWar extends JavaPlugin {
 	private static SiegeWar plugin;
 	public static String prefix = "[SiegeWar] ";
 	private static Version requiredTownyVersion = Version.fromString("0.97.0.0");
+	private static Version requiredTownyVersionForMap = Version.fromString("0.97.0.10");
 	private final static SiegeHUDManager SiegeHudManager = new SiegeHUDManager(plugin);
 	private static boolean siegeWarPluginError = false;
 	private static boolean cannonsPluginIntegrationEnabled = false;
@@ -124,6 +126,11 @@ public class SiegeWar extends JavaPlugin {
         return Version.fromString(version).compareTo(requiredTownyVersion) >= 0;
     }
 
+    private boolean townyHasMapEvents() {
+		return Version.fromString(getTownyVersion()).compareTo(requiredTownyVersionForMap) >= 0;
+	}
+
+
     private String getTownyVersion() {
         return Bukkit.getPluginManager().getPlugin("Towny").getDescription().getVersion();
     }
@@ -144,6 +151,8 @@ public class SiegeWar extends JavaPlugin {
 				pm.registerEvents(new SiegeWarTownyDynmapListener(this), this);
 			if(cannonsPluginIntegrationEnabled)
 				pm.registerEvents(new SiegeWarCannonsListener(this), this);
+			if(townyHasMapEvents())
+				pm.registerEvents(new TownyMapListener(), this);
 		}
 	}
 
